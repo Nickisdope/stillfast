@@ -36,6 +36,14 @@ We provide a list of libraries in requirements.txt. You can easy install these l
 
 `pip install -r requirements.txt`
 
+#### Personal adaptation
+- create environment with `conda env create -f environment.yml`, the pip install will not finish as `torch` is not installed to build `detectron`
+- activate environment: `conda activate stillfast`
+- mannually install torch suite `conda install pytorch==1.11.0 torchvision==0.12.0 torchaudio==0.11.0 -c pytorch`
+- mannually install `pycocotools` as build has some issues with `pip`: `conda install conda-forge::pycocotools`
+- install remaining pip packages: `pip install -r requirements.txt`
+
+
 ### Wandb
 Wandb is enabled by default. To use it set the credentials in `wandb/settings`:
 
