@@ -1,5 +1,5 @@
 [default]
-entity = yournickname
-project = yourprojectname
+entity = xianliu    
+project = stillfast
 base_url = https://api.wandb.ai
 

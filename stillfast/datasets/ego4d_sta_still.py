@@ -29,9 +29,11 @@ class Ego4dShortTermAnticipationStill(torch.utils.data.Dataset):
         if split == "train":
             self._cleanup()
 
+        # different recording has different resolution (e.g.: 1920_1440, 1440_1080, 2560_1920...)
         self._assign_groups_based_on_resolutions()
 
         if split == 'train':
+            # NOTE: not quite sure about this step
             self.weights  = get_annotations_weights(self._annotations)
 
     def _cleanup(self):
@@ -45,6 +47,7 @@ class Ego4dShortTermAnticipationStill(torch.utils.data.Dataset):
                 _obj = []
                 for obj in ann['objects']:
                     box = obj['box']
+                    # check if the bounding box has a valid region > 0
                     if (box[2]-box[0])*(box[3]-box[1]) > 0:
                         _obj.append(obj)
                     else:
@@ -91,7 +94,6 @@ class Ego4dShortTermAnticipationStill(torch.utils.data.Dataset):
             self._annotations = self._load_lists(cfg.EGO4D_STA.VAL_LISTS)
         else:
             self._annotations = self._load_lists(cfg.EGO4D_STA.TEST_LISTS)
-
 
     def _assign_groups_based_on_resolutions(self):
         clmap = {k:f"{v['frame_width']}_{v['frame_height']}" for k,v in self._annotations['videos'].items()}

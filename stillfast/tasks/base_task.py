@@ -67,3 +67,9 @@ class BaseTask(LightningModule):
                     state_dict = {k:v+sd[k]/n for k,v in state_dict.items()}
 
         self.load_state_dict(state_dict)
+    
+    def load_from_checkpoint(self, ckp):
+        """
+        load model state, optimizer state, scheduler state, epoch...
+        """
+        

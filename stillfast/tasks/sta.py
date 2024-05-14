@@ -26,7 +26,7 @@ class STATask(BaseTask):
 
     def training_step(self, batch, batch_idx):
         loss_dict = self.model(batch)
-        loss = sum(loss for loss in loss_dict.values())
+        loss = sum(loss for loss in loss_dict.values()) # .item()?
         for k, v in loss_dict.items():
             self.log(f'train/{k}', v.item())
         self.log('train/loss_overall', loss.item())

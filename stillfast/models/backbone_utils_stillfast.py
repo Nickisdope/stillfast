@@ -251,9 +251,9 @@ class ConvolutionalFusionBlock(nn.Module):
             raise ValueError(f'Unknown pooling: {self.pooling}')
 
     def forward(self, in_2d, in_3d):
-        pooled_3d = self._pool(in_3d)
-        up_3d = F.interpolate(pooled_3d, in_2d.shape[-2:], mode="nearest")
-        up_3d = self.post_up_conv_block(up_3d)
+        pooled_3d = self._pool(in_3d) # pool out temporal dimension (B,C,T,H,W) -> (B,C,H,W)
+        up_3d = F.interpolate(pooled_3d, in_2d.shape[-2:], mode="nearest") # upsample the H, W
+        up_3d = self.post_up_conv_block(up_3d) # upsample channel
 
         if self.gating_block is not None:
             p2d=in_2d.view(*in_2d.shape[:2], -1).mean(-1)
@@ -264,7 +264,7 @@ class ConvolutionalFusionBlock(nn.Module):
             up_3d = up_3d * gating_values
 
         fuse_2d = in_2d + up_3d
-        fuse_2d = self.post_sum_conv_block(fuse_2d)
+        fuse_2d = self.post_sum_conv_block(fuse_2d) # doesn't change shape
 
         return fuse_2d
             
@@ -324,10 +324,11 @@ class StillFastBackbone(nn.Module):
             pretrained = cfg.STILL.BACKBONE.PRETRAINED,
             trainable_layers=cfg.STILL.BACKBONE.TRAINABLE_LAYERS
             )
-        
+        # X3D_m
         fast_backbone = build_clean_3d_backbone(
             backbone_name = cfg.FAST.BACKBONE.NAME,
             pretrained = cfg.FAST.BACKBONE.PRETRAINED,
+            specified_weights=cfg.FAST.BACKBONE.SPECIFIED_WEIGHTS,
             temporal_causal_conv3d= cfg.FAST.BACKBONE.TEMPORAL_CAUSAL_CONV3D
         )
 
@@ -375,7 +376,7 @@ class StillFastBackbone(nn.Module):
         h_still = self.still_backbone.relu(h_still)
         h_still = self.still_backbone.maxpool(h_still)
         
-        # Basic Stem
+        # Basic Stem (2,3,16,256,320) -> (2,24,16,128,160)
         h_fast = self.fast_backbone.blocks[0](h_fast)
         
         still_features = OrderedDict()
@@ -387,7 +388,7 @@ class StillFastBackbone(nn.Module):
             layer_fast = self.fast_backbone.blocks[layer]
             
             h_still = layer_still(h_still)
-            h_fast = layer_fast(h_fast)
+            h_fast = layer_fast(h_fast) # (2,24,16,128,160) -> (2,24,16,64,80) -> (2,48,16,32,40) -> (2,96,16,16,20) -> (2,192,16,8,10)
 
             # If lateral connections are enabled
             # update h_still before going to the next layer

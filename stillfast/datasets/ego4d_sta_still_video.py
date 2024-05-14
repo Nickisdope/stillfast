@@ -97,3 +97,4 @@ class Ego4dShortTermAnticipationStillVideo(Ego4dShortTermAnticipationStill):
         } if gt_boxes is not None else None
 
         return {'still_img': still_img, 'fast_imgs': fast_imgs, 'targets': targets, 'uids': uid}
+    

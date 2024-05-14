@@ -24,16 +24,24 @@ def main(cfg):
         raise NotImplementedError(f"Task {cfg.TASK} not implemented")
 
     task = TaskType(cfg)
+
     ckp_path = cfg.CHECKPOINT_FILE_PATH
-    if ckp_path!="":
-        task.load_from_checkpoint_list(ckp_path)
+    # if ckp_path!="":
+    #     task.load_from_checkpoint_list(ckp_path)
+        
+    #     print(f"Loading from checkpoint to resume.")
+    #     # try with original lightning resume
+    #     task.load_from_checkpoint(ckp_path)
+    
     checkpoint_callback = ModelCheckpoint(
+        # monitor MAP_box_noun_verb_ttc
         monitor=task.checkpoint_metric, 
         mode="max", 
         save_last=True, 
         save_top_k=cfg.SAVE_TOP_K,
         filename='{epoch:02d}-{step:07d}-{'+task.checkpoint_metric+':.4f}'
     )
+
     print(f"Logging enabled: {cfg.ENABLE_LOGGING}")
     if cfg.ENABLE_LOGGING:
         args = {
@@ -57,7 +65,7 @@ def main(cfg):
             return DDPStrategy(find_unused_parameters=False)
         else:
             raise ValueError(f"Strategy {strategy} not implemented")
-    
+
     trainer = Trainer(
         accelerator=cfg.SOLVER.ACCELERATOR,
         devices=cfg.NUM_DEVICES,
@@ -75,14 +83,14 @@ def main(cfg):
 
 
     if cfg.TRAIN.ENABLE and cfg.TEST.ENABLE:
-        trainer.fit(task)
+        trainer.fit(task, ckpt_path=ckp_path if ckp_path!="" else None)
 
         # Calling test without the lightning module arg automatically selects the best
         # model during training.
         return trainer.test()
 
     elif cfg.TRAIN.ENABLE:
-        return trainer.fit(task)
+        return trainer.fit(task, ckpt_path=ckp_path if ckp_path!="" else None)
 
     elif cfg.TEST.ENABLE:
         result = trainer.test(task)
@@ -259,6 +267,8 @@ def load_config(args):
     return cfg
 
 if __name__ == "__main__":
+    # import ipdb; ipdb.set_trace()
+    # import debugpy; debugpy.connect(("snapo", 5678))
     args = parse_args()
     cfg = load_config(args)
     main(cfg)
